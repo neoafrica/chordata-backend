@@ -4,8 +4,11 @@ require("./DataBase/db");
 const  userModel  = require("./DataBase/UserSchema");
 const postRouter= require('./Routers/router')
 const cors= require('cors')
+const job = require("./lib/cron");
 
 // db.cases.createIndex({ title: "text" });
+
+job.start()
 
 const app = express();
 // app.use(cors({origin:'http://localhost:5173'}))
