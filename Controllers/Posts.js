@@ -576,6 +576,40 @@ exports.myStory = async (request, response) => {
 
 // Community questions with formData
 
+// exports.questions = async (req, res) => {
+//   const {
+//     Qn,
+//     caseHistory,
+//     ageOfAnimal,
+//     typeOfAnimal,
+//     sexOfAnimal,
+//     author,
+//   } = req.body;
+
+//   try {
+//     const qnImage = req.files?.map(file => ({
+//       url: file.path,
+//       id: file.filename,
+//     }));
+
+//     const newQuestion = new Questions({
+//       Qn,
+//       qnImage,
+//       caseHistory,
+//       ageOfAnimal,
+//       typeOfAnimal,
+//       sexOfAnimal,
+//       author,
+//     });
+
+//     await newQuestion.save();
+//     res.status(200).json({ status: "ok", data: "Question posted" });
+//   } catch (error) {
+//     console.error("Error saving question:", error);
+//     res.status(500).json({ status: "error", data: error.message });
+//   }
+// };
+
 exports.questions = async (req, res) => {
   const {
     Qn,
@@ -587,19 +621,23 @@ exports.questions = async (req, res) => {
   } = req.body;
 
   try {
-    const qnImage = req.files?.map(file => ({
-      url: file.path,
-      id: file.filename,
-    }));
+    // Only map qnImage if files are present
+    let qnImage = [];
+    if (req.files && req.files.length > 0) {
+      qnImage = req.files.map(file => ({
+        url: file.path,
+        id: file.filename,
+      }));
+    }
 
     const newQuestion = new Questions({
       Qn,
-      qnImage,
       caseHistory,
       ageOfAnimal,
       typeOfAnimal,
       sexOfAnimal,
       author,
+      ...(qnImage.length > 0 && { qnImage }), // only include if not empty
     });
 
     await newQuestion.save();
@@ -609,6 +647,7 @@ exports.questions = async (req, res) => {
     res.status(500).json({ status: "error", data: error.message });
   }
 };
+
 
 
 // get questions
