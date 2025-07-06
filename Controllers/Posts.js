@@ -1,9 +1,10 @@
 const { isValidObjectId } = require("mongoose");
 const Post = require("../DataBase/postSchema");
 const User = require("../DataBase/UserSchema");
+const mongoose = require("mongoose");
 // const Cloudinary = require("../cloudinary/index");
 
-const {cloudinary} = require("../cloudinary/index");
+const { cloudinary } = require("../cloudinary/index");
 const clinical = require("../DataBase/clinicalSchema");
 const Story = require("../DataBase/storySchema");
 const Questions = require("../DataBase/communityQns");
@@ -22,6 +23,7 @@ const otpGenerator = require("otp-generator");
 
 const getTimeAgo = require("../Controllers/getTime");
 const Thread = require("../DataBase/Thread");
+const Message = require("../DataBase/messages");
 // const communityQns = require("../DataBase/communityQns");
 
 exports.deleteUser = async (request, response) => {
@@ -255,7 +257,7 @@ exports.getClinicalPosts = async (request, response) => {
 exports.login = async (request, response) => {
   const { username, password } = request.body;
 
-  // console.log(username, password)
+  // console.log(username, password);
 
   const oldUser = await User.findOne({ username });
 
@@ -497,7 +499,6 @@ exports.getStoryData = async (request, response) => {
   }
 };
 
-
 // Get story by Id for admin panel
 
 exports.getStoryById = async (request, response) => {
@@ -611,20 +612,14 @@ exports.myStory = async (request, response) => {
 // };
 
 exports.questions = async (req, res) => {
-  const {
-    Qn,
-    caseHistory,
-    ageOfAnimal,
-    typeOfAnimal,
-    sexOfAnimal,
-    author,
-  } = req.body;
+  const { Qn, caseHistory, ageOfAnimal, typeOfAnimal, sexOfAnimal, author } =
+    req.body;
 
   try {
     // Only map qnImage if files are present
     let qnImage = [];
     if (req.files && req.files.length > 0) {
-      qnImage = req.files.map(file => ({
+      qnImage = req.files.map((file) => ({
         url: file.path,
         id: file.filename,
       }));
@@ -647,8 +642,6 @@ exports.questions = async (req, res) => {
     res.status(500).json({ status: "error", data: error.message });
   }
 };
-
-
 
 // get questions
 
@@ -673,7 +666,7 @@ exports.getQuestionsForAdmin = async (request, response) => {
           ageOfAnimal: post.ageOfAnimal,
           qnImage: post.qnImage,
           timestamp: post.timestamp,
-          comments:comments?.length
+          comments: comments?.length,
         };
       })
     );
@@ -756,7 +749,7 @@ exports.getQuestionsForAdmin = async (request, response) => {
 exports.getQuestions = async (req, res) => {
   try {
     const search = req.query.search || "";
-    const page = parseInt(req.query.page) ;
+    const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit);
     const skip = (page - 1) * limit;
 
@@ -804,8 +797,6 @@ exports.getQuestions = async (req, res) => {
   }
 };
 
-
-
 // Add comments
 
 exports.AddComment = async (request, response) => {
@@ -826,7 +817,6 @@ exports.AddComment = async (request, response) => {
 };
 
 // get comments
-
 
 exports.getComments = async (request, response) => {
   const PostId = request.params.PostId;
@@ -1227,24 +1217,27 @@ exports.deleteThread = async (req, res) => {
 
     for (const tweet of existedThread.tweets) {
       if (tweet.imageUrl) {
-        const parts = tweet.imageUrl.split('/');
+        const parts = tweet.imageUrl.split("/");
         const filename = parts[parts.length - 1];
-        const publicId = filename.split('.')[0];
+        const publicId = filename.split(".")[0];
 
-        const result = await cloudinary.uploader.destroy(`twitterThreads/${publicId}`);
+        const result = await cloudinary.uploader.destroy(
+          `twitterThreads/${publicId}`
+        );
         console.log(`Deleted image ${publicId}:`, result);
       }
     }
 
     await Thread.findByIdAndDelete(threadId);
 
-    res.status(200).json({ message: "Thread and associated images deleted successfully" });
+    res
+      .status(200)
+      .json({ message: "Thread and associated images deleted successfully" });
   } catch (error) {
     console.error("Error deleting thread:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 // recent Q & a
 
@@ -1566,7 +1559,6 @@ exports.getCase = async (request, response) => {
   }
 };
 
-
 // get Case by id this for the admin panel
 
 exports.getCaseById = async (request, response) => {
@@ -1616,7 +1608,6 @@ exports.getCaseById = async (request, response) => {
 };
 
 // get Question by Id
-
 
 exports.getQuestionById = async (request, response) => {
   const { postId } = request.params;
@@ -1736,10 +1727,9 @@ exports.getQuestionById = async (request, response) => {
 
 // Recent cases with pagination for infinite scrolling
 
-
 exports.RecentCase = async (request, response) => {
   try {
-    const { category, page , limit} = request.query;
+    const { category, page, limit } = request.query;
 
     // Convert `page` and `limit` to numbers
     const pageNum = parseInt(page, 10);
@@ -1757,7 +1747,7 @@ exports.RecentCase = async (request, response) => {
     // Fetch the cases based on the query filter with pagination
     const cases = await Cases.find(query)
       .sort({ createdAt: -1 })
-      .skip(skip)  // Skips the previous pages' records
+      .skip(skip) // Skips the previous pages' records
       .limit(limitNum) // Limits the number of records per page
       .populate("author");
 
@@ -1806,13 +1796,12 @@ exports.RecentCase = async (request, response) => {
   }
 };
 
-
 // Recent case catagory with pagination
 
 // exports.recentCaseCategory = async (request, response) => {
 //   try {
 //     const { category, page = 1, limit = 10 } = request.query;
-    
+
 //     // Convert `page` and `limit` to numbers
 //     const pageNum = parseInt(page, 10);
 //     const limitNum = parseInt(limit, 10);
@@ -1867,8 +1856,8 @@ exports.RecentCase = async (request, response) => {
 
 exports.recentCaseCategory = async (request, response) => {
   try {
-    const { category, page, limit} = request.query;
-    
+    const { category, page, limit } = request.query;
+
     // Convert `page` and `limit` to numbers
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -1885,7 +1874,7 @@ exports.recentCaseCategory = async (request, response) => {
     // Fetch the cases based on the query filter with pagination
     const cases = await Cases.find(query)
       .sort({ createdAt: -1 })
-      .skip(skip)  // Skips the previous pages' records
+      .skip(skip) // Skips the previous pages' records
       .limit(limitNum) // Limits the number of records per page
       .populate("author");
 
@@ -1926,8 +1915,6 @@ exports.recentCaseCategory = async (request, response) => {
     response.status(500).json({ message: "Internal server error" });
   }
 };
-
-
 
 // Recent case by animal category
 
@@ -2250,8 +2237,8 @@ exports.Otp = async (request, response) => {
     let transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user:"chordata.vet@gmail.com",
-        pass:"cpya jzky fqxm fdau "
+        user: "chordata.vet@gmail.com",
+        pass: "cpya jzky fqxm fdau ",
         // user: "kephapatrick8@gmail.com", // your email
         // pass: "keos zmpa olit rbuk ", // your email password or app password
       },
@@ -2259,7 +2246,7 @@ exports.Otp = async (request, response) => {
 
     const mailOptions = {
       // from: "kephapatrick8@gmail.com",
-      from:"chordata.vet@gmail.com",
+      from: "chordata.vet@gmail.com",
       to: emailOrPhone,
       subject: "Your Chordata OTP Code",
       text: `
@@ -2294,53 +2281,315 @@ The Chordata Team
   }
 };
 
-
 // All cases
 
- exports.getAllCase = async (request, response) => {
-   try {
-      const cases = await Cases.find().sort({ createdAt: -1 }).populate("author");
+exports.getAllCase = async (request, response) => {
+  try {
+    const cases = await Cases.find().sort({ createdAt: -1 }).populate("author");
+
+    const dataWithComments = await Promise.all(
+      cases.map(async (post) => {
+        const comments = await Comment.find({ postId: post._id }); // or postId depending on your schema
+
+        return {
+          id: post._id,
+          author: post.author._id,
+          bookmarks: post.bookmarks,
+          username: post.author.username,
+          authorPic: post.author.profileImage?.secure_url,
+          category: post.category,
+          caseTitle: post.caseTitle,
+          typeOfAnimal: post.typeOfAnimal,
+          sexOfAnimal: post.sexOfAnimal,
+          ageOfAnimal: post.ageOfAnimal,
+          caseHistory: post.caseHistory,
+          clinicalFindings: post.clinicalFindings,
+          clinicalManagement: post.clinicalManagement,
+          drugsUsed: post.drugsUsed,
+          DifferentialDiagnosis: post.DifferentialDiagnosis,
+          VaccineAgainst: post.VaccineAgainst,
+          VaccinationRegime: post.VaccinationRegime,
+          TypeOfVaccine: post.TypeOfVaccine,
+          managementCategory: post.managementCategory,
+          description: post.description,
+          TentativeDiagnosis: post.TentativeDiagnosis,
+          recommendations: post.recommendations,
+          ProceduralSteps: post.ProceduralSteps,
+          Poc: post.Poc,
+          caseImage: post.caseImage,
+          createdAt: post.createdAt,
+          comments: comments?.length, // or send full comments if needed
+        };
+      })
+    );
+
+    response.json(dataWithComments);
+  } catch (error) {
+    console.error("Error fetching recent cases:", error);
+    response.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// End point to access all users except current login user
+
+exports.chartRoomUsers = async (request,response) =>{
+  const logInUserId= request.params.userId;
+
+  // console.log(logInUserId)
+
+  User.find({_id:{$ne:logInUserId}}).then((users)=>{
+    response.status(200).json(users)
+    // console.log(users)
+  }).catch ((error)=> {
+    console.error("Error fetching recent cases:", error);
+    response.status(500).json({ message: "error retrieving users" });
+  })
+}
+
+
+//  end point for messages
+
+
+exports.Messages = async (request, response) => {
+  const { senderId, recepientId, messageType, message } = request.body;
+
+
+  let imageUrl= null
   
-      const dataWithComments = await Promise.all(
-        cases.map(async (post) => {
-          const comments = await Comment.find({ postId: post._id }); // or postId depending on your schema
   
-          return {
-            id: post._id,
-            author: post.author._id,
-            bookmarks: post.bookmarks,
-            username: post.author.username,
-            authorPic: post.author.profileImage?.secure_url,
-            category: post.category,
-            caseTitle: post.caseTitle,
-            typeOfAnimal: post.typeOfAnimal,
-            sexOfAnimal: post.sexOfAnimal,
-            ageOfAnimal: post.ageOfAnimal,
-            caseHistory: post.caseHistory,
-            clinicalFindings: post.clinicalFindings,
-            clinicalManagement: post.clinicalManagement,
-            drugsUsed: post.drugsUsed,
-            DifferentialDiagnosis: post.DifferentialDiagnosis,
-            VaccineAgainst: post.VaccineAgainst,
-            VaccinationRegime: post.VaccinationRegime,
-            TypeOfVaccine: post.TypeOfVaccine,
-            managementCategory: post.managementCategory,
-            description: post.description,
-            TentativeDiagnosis: post.TentativeDiagnosis,
-            recommendations: post.recommendations,
-            ProceduralSteps: post.ProceduralSteps,
-            Poc: post.Poc,
-            caseImage: post.caseImage,
-            createdAt: post.createdAt,
-            comments: comments?.length, // or send full comments if needed
-          };
-        })
-      );
-  
-      response.json(dataWithComments);
-    } catch (error) {
-      console.error("Error fetching recent cases:", error);
-      response.status(500).json({ message: "Internal server error" });
+  if (messageType === "image" && request.file) {
+    const url={url:request.file.path, public_id: request.file.filename}
+    imageUrl= url
     }
-  
-   };
+
+    
+  try {
+
+    const newMessage = new Message({
+      senderId:senderId,
+      recepientId:recepientId,
+      messageType:messageType,
+      message: messageType === "text" ? message : "",
+      timestamp: new Date(),
+      imageUrl: "" || imageUrl,
+    });
+
+    await newMessage.save();
+
+    response.status(200).json({ message: "Message sent successfully" });
+  } catch (error) {
+    console.error("Error saving message:", error);
+    response.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+exports.ChatHeader = async (request, response) => {
+  try {
+    const { userId } = request.params;
+
+    // console.log("recipient Id", userId);
+
+    const recipient = await User.findById(userId);  // ✅ Await the result
+
+    // console.log(recipient);
+
+    response.json( recipient );  // ✅ Use .json() with plain object
+  } catch (error) {
+    console.error("Error fetching recent cases:", error);
+    response.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+// Get convo btn two users
+
+exports.getConvo = async (request, response) =>{
+  try {
+    const {recepientId, senderId} = request.params
+
+    const messages= await Message.find({
+      $or:[
+        {senderId:senderId, recepientId:recepientId},
+        {senderId:recepientId, recepientId:senderId}
+      ]
+    }).populate("senderId", "_id")
+
+    response.json(messages)
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    response.status(500).json({ message: "internal server error" });
+  }
+}
+
+// Get inBox
+
+// exports.InBox = async (request, response) => {
+//   try {
+//     const { userId } = request.params;
+
+//     const messages = await Message.find({
+//       $or: [
+//         { senderId: userId },
+//         { recepientId: userId }
+//       ]
+//     })
+//       .populate("senderId", "_id")
+//       .populate("recepientId", "_id");
+
+//     response.json(messages);
+//   } catch (error) {
+//     console.error("Error fetching inbox:", error);
+//     response.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+exports.InBox = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const messages = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: new mongoose.Types.ObjectId(userId) },
+            { recepientId: new mongoose.Types.ObjectId(userId) }
+          ]
+        }
+      },
+      {
+        $addFields: {
+          otherUser: {
+            $cond: [
+              { $eq: ["$senderId", new mongoose.Types.ObjectId(userId)] },
+              "$recepientId",
+              "$senderId"
+            ]
+          }
+        }
+      },
+      {
+        $sort: { timestamp: -1 }
+      },
+      {
+        $group: {
+          _id: "$otherUser",
+          message: { $first: "$message" },
+          timestamp: { $first: "$timestamp" },
+          senderId: { $first: "$senderId" },
+          recepientId: { $first: "$recepientId" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$recepientId", new mongoose.Types.ObjectId(userId)] },
+                    { $eq: ["$isRead", false] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          },
+          fullDoc: { $first: "$$ROOT" }
+        }
+      },
+      {
+        $replaceRoot: { newRoot: { $mergeObjects: ["$fullDoc", { unreadCount: "$unreadCount" }] } }
+      }
+    ]);
+
+    await Message.populate(messages, [
+      { path: "senderId", select: "_id" },
+      { path: "recipientId", select: "_id" }
+    ]);
+
+    // total unread messages
+
+     const totalUnreadCount = await Message.countDocuments({
+      recepientId: userId,
+      isRead: false
+    });
+
+    res.json({messages, totalUnreadCount});
+  } catch (err) {
+    console.error("Error fetching inbox:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+// Mark unread messages
+
+exports.markMessagesAsRead = async (req, res) => {
+  try {
+    const { userId, otherUserId } = req.body;
+
+    // console.log(userId,otherUserId)
+
+    const result= await Message.updateMany(
+      {
+        senderId: otherUserId,
+        recepientId: userId,
+        isRead: false,
+      },
+      { $set: { isRead: true } }
+    );
+
+    // console.log("results", result)
+    
+    res.status(200).json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Delete messages
+
+// exports.DeleteMessage = async (req, response)=>{
+//   const {messages} = req.body
+
+//   console.log(messages)
+//   try {
+//     if(!Array.isArray(messages) || messages.length ===0){
+//       return response.status(400).json({message: "Invalid request body"})
+//     }
+//     await Message.deleteMany({_id:{$in:messages}})
+
+//     response.status(200).json("Message deleted successfully")
+//   } catch (error) {
+//     console.log(error)
+//     response.status(500).json({error:"internal server error"})
+//   }
+// }
+
+
+exports.DeleteMessage = async (req, res) => {
+  const { messages } = req.body;
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ message: "Invalid request body" });
+  }
+
+  try {
+    // 1. Find messages before deleting
+    const messageDocs = await Message.find({ _id: { $in: messages } });
+
+    // 2. Delete Cloudinary images for image messages
+    const deleteImagePromises = messageDocs
+      .filter((msg) => msg.messageType === "image" && msg.imageUrl?.public_id)
+      .map((msg) => cloudinary.uploader.destroy(msg.imageUrl.public_id));
+
+    await Promise.all(deleteImagePromises);
+
+    // 3. Delete messages from DB
+    await Message.deleteMany({ _id: { $in: messages } });
+
+    res.status(200).json({ message: "Messages deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting messages:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
